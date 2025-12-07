@@ -1,0 +1,45 @@
+{
+  "tests": [
+    {
+      "name": "Test send email code",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "contact": "test@example.com",
+        "method": "email"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "message": "string",
+        "code": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test send SMS code",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "contact": "+79991234567",
+        "method": "phone"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test missing contact",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -349,24 +349,69 @@ const AuthPage = ({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => 
   const [step, setStep] = useState<"input" | "code">("input");
   const [contactValue, setContactValue] = useState("");
   const [code, setCode] = useState("");
+  const [sentCode, setSentCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSendCode = (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep("code");
-    toast({
-      title: "Код отправлен!",
-      description: `Проверьте ${authMethod === "email" ? "почту" : "SMS"}`,
-    });
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/db3f3c29-483e-4ab2-92f3-72e878120a7d', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contact: contactValue,
+          method: authMethod
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSentCode(data.code);
+        setStep("code");
+        toast({
+          title: "Код отправлен!",
+          description: `Проверьте ${authMethod === "email" ? "почту" : "SMS"}`,
+        });
+      } else {
+        toast({
+          title: "Ошибка отправки",
+          description: data.error || "Не удалось отправить код",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Проблема с подключением к серверу",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyCode = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Успешный вход!",
-      description: "Добро пожаловать в личный кабинет",
-    });
-    onSuccess();
+    
+    if (code === sentCode) {
+      toast({
+        title: "Успешный вход!",
+        description: "Добро пожаловать в личный кабинет",
+      });
+      onSuccess();
+    } else {
+      toast({
+        title: "Неверный код",
+        description: "Проверьте код и попробуйте снова",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -415,8 +460,15 @@ const AuthPage = ({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => 
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full">
-                    Получить код
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Icon name="Loader2" size={20} className="mr-2 animate-spin" />
+                        Отправка...
+                      </>
+                    ) : (
+                      "Получить код"
+                    )}
                   </Button>
                 </form>
               </>
